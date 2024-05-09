@@ -36,6 +36,7 @@ from .utils import (
     save_dataset_cache_file,
     verify_image,
     verify_image_label,
+    verify_image_label_seg_pose,
 )
 
 # Ultralytics dataset *.cache version, >= 1.0.0 for YOLOv8
@@ -58,6 +59,7 @@ class YOLODataset(BaseDataset):
         """Initializes the YOLODataset with optional configurations for segments and keypoints."""
         self.use_segments = task == "segment"
         self.use_keypoints = task == "pose"
+        self.use_segments_keypoints = task == "segment_pose"
         self.use_obb = task == "obb"
         self.data = data
         assert not (self.use_segments and self.use_keypoints), "Can not use both segments and keypoints."
@@ -83,42 +85,71 @@ class YOLODataset(BaseDataset):
                 "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
                 "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
             )
-        with ThreadPool(NUM_THREADS) as pool:
-            results = pool.imap(
-                func=verify_image_label,
-                iterable=zip(
-                    self.im_files,
-                    self.label_files,
-                    repeat(self.prefix),
-                    repeat(self.use_keypoints),
-                    repeat(len(self.data["names"])),
-                    repeat(nkpt),
-                    repeat(ndim),
-                ),
-            )
-            pbar = TQDM(results, desc=desc, total=total)
-            for im_file, lb, shape, segments, keypoint, nm_f, nf_f, ne_f, nc_f, msg in pbar:
-                nm += nm_f
-                nf += nf_f
-                ne += ne_f
-                nc += nc_f
-                if im_file:
-                    x["labels"].append(
-                        {
-                            "im_file": im_file,
-                            "shape": shape,
-                            "cls": lb[:, 0:1],  # n, 1
-                            "bboxes": lb[:, 1:],  # n, 4
-                            "segments": segments,
-                            "keypoints": keypoint,
-                            "normalized": True,
-                            "bbox_format": "xywh",
-                        }
-                    )
-                if msg:
-                    msgs.append(msg)
-                pbar.desc = f"{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt"
-            pbar.close()
+        if self.use_segments_keypoints:
+            with ThreadPool(NUM_THREADS) as pool:
+                results = pool.imap(func=verify_image_label,
+                                    iterable=zip(self.im_files, self.label_files, repeat(self.prefix),
+                                                repeat(self.use_keypoints), repeat(len(self.data['names'])), repeat(nkpt),
+                                                repeat(ndim)))
+                pbar = TQDM(results, desc=desc, total=total)
+                for im_file, lb, shape, segments, keypoint, nm_f, nf_f, ne_f, nc_f, msg in pbar:
+                    nm += nm_f
+                    nf += nf_f
+                    ne += ne_f
+                    nc += nc_f
+                    if im_file:
+                        x['labels'].append(
+                            {
+                                "im_file": im_file,
+                                "shape": shape,
+                                "cls": lb[:, 0:1],  # n, 1
+                                "bboxes": lb[:, 1:],  # n, 4
+                                "segments": segments,
+                                "keypoints": keypoint,
+                                "normalized": True,
+                                "bbox_format": 'xywh',
+                            })
+                    if msg:
+                        msgs.append(msg)
+                    pbar.desc = f'{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt'
+                pbar.close()
+        else:
+            with ThreadPool(NUM_THREADS) as pool:
+                results = pool.imap(
+                    func=verify_image_label,
+                    iterable=zip(
+                        self.im_files,
+                        self.label_files,
+                        repeat(self.prefix),
+                        repeat(self.use_keypoints),
+                        repeat(len(self.data["names"])),
+                        repeat(nkpt),
+                        repeat(ndim),
+                    ),
+                )
+                pbar = TQDM(results, desc=desc, total=total)
+                for im_file, lb, shape, segments, keypoint, nm_f, nf_f, ne_f, nc_f, msg in pbar:
+                    nm += nm_f
+                    nf += nf_f
+                    ne += ne_f
+                    nc += nc_f
+                    if im_file:
+                        x["labels"].append(
+                            {
+                                "im_file": im_file,
+                                "shape": shape,
+                                "cls": lb[:, 0:1],  # n, 1
+                                "bboxes": lb[:, 1:],  # n, 4
+                                "segments": segments,
+                                "keypoints": keypoint,
+                                "normalized": True,
+                                "bbox_format": "xywh",
+                            }
+                        )
+                    if msg:
+                        msgs.append(msg)
+                    pbar.desc = f"{desc} {nf} images, {nm + ne} backgrounds, {nc} corrupt"
+                pbar.close()
 
         if msgs:
             LOGGER.info("\n".join(msgs))
@@ -183,8 +214,8 @@ class YOLODataset(BaseDataset):
             Format(
                 bbox_format="xywh",
                 normalize=True,
-                return_mask=self.use_segments,
-                return_keypoint=self.use_keypoints,
+                return_mask=self.use_segments or self.use_segments_keypoints,
+                return_keypoint=self.use_keypoints or self.use_segments_keypoints,
                 return_obb=self.use_obb,
                 batch_idx=True,
                 mask_ratio=hyp.mask_ratio,

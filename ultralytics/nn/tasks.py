@@ -49,10 +49,11 @@ from ultralytics.nn.modules import (
     Segment,
     Silence,
     WorldDetect,
+    SegmentPose,
 )
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
-from ultralytics.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8OBBLoss, v8PoseLoss, v8SegmentationLoss
+from ultralytics.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8OBBLoss, v8PoseLoss, v8SegmentationLoss, v8SegmentationPoseLoss
 from ultralytics.utils.plotting import feature_visualization
 from ultralytics.utils.torch_utils import (
     fuse_conv_and_bn,
@@ -293,7 +294,7 @@ class DetectionModel(BaseModel):
         if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
             s = 256  # 2x min stride
             m.inplace = self.inplace
-            forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+            forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB, SegmentPose)) else self.forward(x)
             m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s))])  # forward
             self.stride = m.stride
             m.bias_init()  # only run once
@@ -369,6 +370,22 @@ class SegmentationModel(DetectionModel):
     def init_criterion(self):
         """Initialize the loss criterion for the SegmentationModel."""
         return v8SegmentationLoss(self)
+
+
+class SegmentationPoseModel(DetectionModel):
+    """YOLOv8 segmentation-pose model."""
+
+    def __init__(self, cfg='yolov8n-segpose.yaml', ch=3, nc=None, data_kpt_shape=(None, None), verbose=True):
+        """Initialize YOLOv8 segmentation-pose model with given config and parameters."""
+        if not isinstance(cfg, dict):
+            cfg = yaml_model_load(cfg)  # load model YAML
+        if any(data_kpt_shape) and list(data_kpt_shape) != list(cfg['kpt_shape']):
+            LOGGER.info(f"Overriding model.yaml kpt_shape={cfg['kpt_shape']} with kpt_shape={data_kpt_shape}")
+            cfg['kpt_shape'] = data_kpt_shape
+        super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
+
+    def init_criterion(self):
+        return v8SegmentationPoseLoss(self)
 
 
 class PoseModel(DetectionModel):
@@ -925,6 +942,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m is SegmentPose:
+            args.append([ch[x] for x in f])
+            args[3] = make_divisible(min(args[3], max_channels) * width, 8) 
         else:
             c2 = ch[f]
 
