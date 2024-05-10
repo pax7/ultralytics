@@ -85,9 +85,10 @@ class YOLODataset(BaseDataset):
                 "'kpt_shape' in data.yaml missing or incorrect. Should be a list with [number of "
                 "keypoints, number of dims (2 for x,y or 3 for x,y,visible)], i.e. 'kpt_shape: [17, 3]'"
             )
+        func = verify_image_label_seg_pose if self.use_segments_keypoints else verify_image_label
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(
-                func=verify_image_label_seg_pose if self.use_segments_keypoints else verify_image_label,
+                func=func,
                 iterable=zip(
                     self.im_files,
                     self.label_files,
