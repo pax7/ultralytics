@@ -2,9 +2,10 @@
 
 import torch
 
-from ultralytics.yolo.engine.results import Results
-from ultralytics.yolo.utils import DEFAULT_CFG, ROOT, ops
-from ultralytics.yolo.v8.detect.predict import DetectionPredictor
+from ultralytics.engine.results import Results
+from ultralytics.models.yolo.detect.predict import DetectionPredictor
+from ultralytics.utils import DEFAULT_CFG, ROOT, ops
+
 
 class SegmentationPosePredictor(DetectionPredictor):
 

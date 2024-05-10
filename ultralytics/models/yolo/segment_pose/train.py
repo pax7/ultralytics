@@ -1,14 +1,14 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 from copy import copy
 
+from ultralytics.models import yolo
 from ultralytics.nn.tasks import SegmentationPoseModel
-from ultralytics.yolo import v8
-from ultralytics.yolo.utils import DEFAULT_CFG, RANK
-from ultralytics.yolo.utils.plotting import plot_images, plot_results
+from ultralytics.utils import DEFAULT_CFG, RANK
+from ultralytics.utils.plotting import plot_images, plot_results
 
 
 # BaseTrainer python usage
-class SegmentationPoseTrainer(v8.detect.DetectionTrainer):
+class SegmentationPoseTrainer(yolo.detect.DetectionTrainer):
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
         """Initialize a SegmentationTrainer object with given arguments."""
@@ -27,7 +27,7 @@ class SegmentationPoseTrainer(v8.detect.DetectionTrainer):
     def get_validator(self):
         """Return an instance of SegmentationPoseValidator for validation of YOLO model."""
         self.loss_names = 'box_loss', 'seg_loss', 'cls_loss', 'dfl_loss', 'pose_loss', 'kobj_loss'
-        return v8.segment_pose.SegmentationPoseValidator(self.test_loader, save_dir=self.save_dir, args=copy(self.args))
+        return yolo.segment_pose.SegmentationPoseValidator(self.test_loader, save_dir=self.save_dir, args=copy(self.args))
 
     def plot_training_samples(self, batch, ni):
         """Creates a plot of training sample images with labels and box coordinates."""
