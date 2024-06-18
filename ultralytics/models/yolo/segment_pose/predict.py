@@ -42,7 +42,8 @@ class SegmentationPosePredictor(DetectionPredictor):
 
         results = []
         proto = preds[1][-2] if isinstance(preds[1], tuple) else preds[1]  # tuple if PyTorch model or array if exported
-        nkpt, ndim = self.model.kpt_shape[0], self.model.kpt_shape[1]
+        # nkpt, ndim = self.model.kpt_shape[0], self.model.kpt_shape[1]
+        nkpt, ndim = 17, 3
         for i, pred in enumerate(p):
             orig_img = orig_imgs[i]
             img_path = self.batch[0][i]
