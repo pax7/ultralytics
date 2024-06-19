@@ -390,6 +390,7 @@ class SegmentationModel(DetectionModel):
         """Initialize the loss criterion for the SegmentationModel."""
         return v8SegmentationLoss(self)
 
+
 class SegmentationPoseModel(DetectionModel):
     """YOLOv8 segmentation-pose model."""
 

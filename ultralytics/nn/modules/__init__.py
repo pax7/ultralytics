@@ -114,8 +114,7 @@ __all__ = (
     "Proto",
     "Detect",
     "Segment",
-    "SegmentPose"
-    "Pose",
+    "SegmentPose" "Pose",
     "Classify",
     "TransformerEncoderLayer",
     "RepC3",

@@ -31,15 +31,17 @@ class SegmentationPoseTrainer(yolo.detect.DetectionTrainer):
 
     def get_model(self, cfg=None, weights=None, verbose=True):
         """Return SegmentationPoseModel initialized with specified config and weights."""
-        model = SegmentationPoseModel(cfg, ch=3, nc=self.data["nc"], data_kpt_shape=self.data['kpt_shape'], verbose=verbose and RANK == -1)
-        model.kpt_shape = self.data['kpt_shape']
+        model = SegmentationPoseModel(
+            cfg, ch=3, nc=self.data["nc"], data_kpt_shape=self.data["kpt_shape"], verbose=verbose and RANK == -1
+        )
+        model.kpt_shape = self.data["kpt_shape"]
         if weights:
             model.load(weights)
         return model
 
     def get_validator(self):
         """Return an instance of SegmentationPoseValidator for validation of YOLO model."""
-        self.loss_names = "box_loss", "seg_loss", "cls_loss", "dfl_loss", 'pose_loss', 'kobj_loss'
+        self.loss_names = "box_loss", "seg_loss", "cls_loss", "dfl_loss", "pose_loss", "kobj_loss"
         return yolo.segment_pose.SegmentationPoseValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )

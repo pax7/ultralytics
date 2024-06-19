@@ -113,6 +113,7 @@ class Segment(Detect):
             return x, mc, p
         return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
 
+
 class SegmentPose(Detect):
     """YOLOv8 SegmentPose head for segmentation-pose models."""
 
@@ -142,7 +143,11 @@ class SegmentPose(Detect):
         if self.training:
             return x, mc, p, kpt
         pred_kpt = self.kpts_decode(bs, kpt)
-        return (torch.cat([x, mc, pred_kpt], 1), p) if self.export else (torch.cat([x[0], mc, pred_kpt], 1), (x[1], mc, p, kpt))
+        return (
+            (torch.cat([x, mc, pred_kpt], 1), p)
+            if self.export
+            else (torch.cat([x[0], mc, pred_kpt], 1), (x[1], mc, p, kpt))
+        )
 
     def kpts_decode(self, bs, kpts):
         """Decodes keypoints."""
@@ -160,6 +165,7 @@ class SegmentPose(Detect):
             y[:, 0::ndim] = (y[:, 0::ndim] * 2.0 + (self.anchors[0] - 0.5)) * self.strides
             y[:, 1::ndim] = (y[:, 1::ndim] * 2.0 + (self.anchors[1] - 0.5)) * self.strides
             return y
+
 
 class OBB(Detect):
     """YOLOv8 OBB detection head for detection with rotation models."""

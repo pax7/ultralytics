@@ -1061,7 +1061,9 @@ class SegmentPoseMetrics(SimpleClass):
     """
 
     def __init__(self, save_dir=Path("."), plot=False, on_plot=None, names=()) -> None:
-        """Initialize a SegmentPoseMetrics instance with a save directory, plot flag, callback function, and class names."""
+        """Initialize a SegmentPoseMetrics instance with a save directory, plot flag, callback function, and class
+        names.
+        """
         self.save_dir = save_dir
         self.plot = plot
         self.on_plot = on_plot
@@ -1193,6 +1195,7 @@ class SegmentPoseMetrics(SimpleClass):
     def curves_results(self):
         """Returns dictionary of computed performance metrics and statistics."""
         return self.box.curves_results + self.seg.curves_results + self.pose.curves_results
+
 
 class PoseMetrics(SegmentMetrics):
     """

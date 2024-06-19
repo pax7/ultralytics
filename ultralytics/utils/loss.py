@@ -708,6 +708,7 @@ class v8SegmentationPoseLoss(v8DetectionLoss):
 
         return kpts_loss, kpts_obj_loss
 
+
 class v8PoseLoss(v8DetectionLoss):
     """Criterion class for computing training losses."""
 
