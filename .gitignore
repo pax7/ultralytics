@@ -167,3 +167,4 @@ pnnx*
 
 # calibration image
 calibration_*.npy
+/train_segpose.py
