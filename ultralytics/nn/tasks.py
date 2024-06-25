@@ -713,7 +713,7 @@ class Ensemble(nn.ModuleList):
 
 
 @contextlib.contextmanager
-def temporary_modules(modules={}, attributes={}):
+def temporary_modules(modules=None, attributes=None):
     """
     Context manager for temporarily adding or modifying modules in Python's module cache (`sys.modules`).
 
@@ -738,6 +738,10 @@ def temporary_modules(modules={}, attributes={}):
         applications or libraries. Use this function with caution.
     """
 
+    if modules is None:
+        modules = {}
+    if attributes is None:
+        attributes = {}
     import sys
     from importlib import import_module
 
